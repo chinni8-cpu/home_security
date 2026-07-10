@@ -1,0 +1,64 @@
+'''BACKUP START'''
+
+# Full backup of current app.py
+
+'''
+
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import cv2
+import os
+import json
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import pymysql
+import threading
+import time
+import numpy as np
+import re
+import urllib.parse
+
+app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/cctv_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads/family_members'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Initialize database
+db = SQLAlchemy(app)
+
+# --- models ---
+class User(db.Model):
+	__tablename__ = 'users'
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String(50), unique=True, nullable=False)
+	password = db.Column(db.String(255), nullable=False)
+	email = db.Column(db.String(100))
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class FamilyMember(db.Model):
+	__tablename__ = 'family_members'
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(100), nullable=False)
+	image_path = db.Column(db.String(255))
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Alert(db.Model):
+	__tablename__ = 'alerts'
+	id = db.Column(db.Integer, primary_key=True)
+	alert_type = db.Column(db.String(50))
+	message = db.Column(db.Text)
+	image_path = db.Column(db.String(255))
+	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+with app.app_context():
+	db.create_all()
+
+'''

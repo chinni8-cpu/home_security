@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV Monitoring Dashboard</title>
+    <style>
+        /* ====== RESET & BASE ====== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ====== ANIMATED BACKGROUND ====== */
+        .dashboard-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .d-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: floatOrb 25s ease-in-out infinite;
+        }
+
+        .d-orb-1 {
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, #4facfe, #00f2fe);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .d-orb-2 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #f093fb, #f5576c);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: -7s;
+        }
+
+        .d-orb-3 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #fbbf24, #f59e0b);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(60px, -60px) scale(1.1); }
+            66% { transform: translate(-40px, 40px) scale(0.9); }
+        }
+
+        /* ====== DASHBOARD CONTAINER ====== */
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ====== HEADER ====== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 span {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header h1 i {
+            font-size: 30px;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(79, 172, 254, 0.3); }
+            50% { text-shadow: 0 0 40px rgba(79, 172, 254, 0.8); }
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-badge .num {
+            color: #4facfe;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .btn-logout {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.2);
+        }
+
+        /* ====== MAIN GRID ====== */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        /* ====== VIDEO SECTION ====== */
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .camera-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s;
+            animation: slideUp 0.7s ease-out;
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .camera-container:hover {
+            border-color: rgba(79, 172, 254, 0.3);
+            box-shadow: 0 10px 40px rgba(79, 172, 254, 0.05);
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .camera-header h3 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        .status-dot.active {
+            background: #2ecc71;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .status-dot.inactive {
+            background: #e74c3c;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.3);
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .camera-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            background: #0a0a1a;
+            min-height: 400px;
+            object-fit: cover;
+            transition: all 0.3s;
+        }
+
+        .camera-container img.active {
+            border: 2px solid rgba(46, 204, 113, 0.3);
+            box-shadow: 0 0 60px rgba(46, 204, 113, 0.05);
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .camera-controls button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+        }
+
+        /* ====== FAMILY MEMBERS ====== */
+        .family-members {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: slideUp 0.9s ease-out;
+        }
+
+        .family-members h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #membersList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        #membersList::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #membersList::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+        }
+
+        #membersList::-webkit-scrollbar-thumb {
+            background: #4facfe;
+            border-radius: 2px;
+        }
+
+        .member-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .member-item:hover {
+            transform: translateY(-5px);
+            border-color: rgba(79, 172, 254, 0.3);
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.05);
+        }
+
+        .member-item img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(79, 172, 254, 0.3);
+            transition: all 0.3s;
+        }
+
+        .member-item:hover img {
+            border-color: #4facfe;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.2);
+        }
+
+        .member-item span {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(231, 76, 60, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: #e74c3c;
+            transform: scale(1.2);
+        }
+
+        /* ====== ADD MEMBER FORM ====== */
+        .add-member {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 15px;
+        }
+
+        .add-member h4 {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+        }
+
+        #addMemberForm {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #addMemberForm input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            font-size: 14px;
+            min-width: 120px;
+            transition: all 0.3s;
+        }
+
+        #addMemberForm input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.1);
+        }
+
+        #addMemberForm input[type="file"] {
+            padding: 8px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+        }
+
+        /* ====== ALERTS SECTION ====== */
+        .alerts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        #alertsPanel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-height: 450px;
+            overflow-y: auto;
+            animation: slideUp 1s ease-out;
+        }
+
+        #alertsPanel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #alertsPanel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+        }
+
+        #alertsPanel::-webkit-scrollbar-thumb {
+            background: #f5576c;
+            border-radius: 2px;
+        }
+
+        #alertsPanel h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #alertsList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-out;
+            transition: all 0.3s;
+        }
+
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(5px);
+        }
+
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-item .time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* ====== ACTION BUTTONS ====== */
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-email {
+            background: linear-gradient(135deg, #EA4335, #C62828);
+            color: white;
+        }
+
+        .btn-email:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(234, 67, 53, 0.3);
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-container {
+                padding: 12px;
+            }
+
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+
+            .header-stats {
+                flex-wrap: wrap;
+            }
+
+            .camera-container img {
+                min-height: 200px;
+            }
+
+            .camera-controls button {
+                min-width: 100px;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            #addMemberForm {
+                flex-direction: column;
+            }
+
+            #addMemberForm input {
+                min-width: 100%;
+            }
+
+            .actions button {
+                min-width: 100px;
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+        }
+
+        /* ====== TOAST NOTIFICATION ====== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .toast.info {
+            border-left: 4px solid #4facfe;
+        }
+
+        .toast .toast-icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ====== BACKGROUND ====== -->
+    <div class="dashboard-bg">
+        <div class="d-orb d-orb-1"></div>
+        <div class="d-orb d-orb-2"></div>
+        <div class="d-orb d-orb-3"></div>
+    </div>
+
+    <!-- ====== TOAST ====== -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✅</span>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <!-- ====== DASHBOARD ====== -->
+    <div class="dashboard-container">
+        <header>
+            <h1>
+                <i>🎥</i>
+                <span>CCTV Security</span>
+            </h1>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    👥 <span class="num" id="memberCount">0</span> Members
+                </div>
+                <div class="stat-badge">
+                    ⚠️ <span class="num" id="alertCount">0</span> Alerts
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">{{ username[0]|upper }}</div>
+                    <span style="color: rgba(255,255,255,0.7);">Welcome, {{ username }}!</span>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">🚪 Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="video-section">
+                <div class="camera-container">
+                    <div class="camera-header">
+                        <h3>
+                            📹 Live Feed
+                            <span class="status-dot inactive" id="statusDot"></span>
+                        </h3>
+                        <span style="font-size: 13px; color: rgba(255,255,255,0.3);" id="camStatus">Offline</span>
+                    </div>
+                    <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Camera Feed">
+                    <div class="camera-controls">
+                        <button id="startCamera" class="btn-start">▶ Start Camera</button>
+                        <button id="stopCamera" class="btn-stop">⏹ Stop Camera</button>
+                    </div>
+                </div>
+
+                <div class="family-members">
+                    <h3>👨‍👩‍👧‍👦 Family Members</h3>
+                    <div id="membersList"></div>
+                    <div class="add-member">
+                        <h4>➕ Add New Member</h4>
+                        <form id="addMemberForm" enctype="multipart/form-data">
+                            <input type="text" id="memberName" placeholder="Enter name" required>
+                            <input type="file" id="memberImage" accept="image/*" required>
+                            <button type="submit" class="btn-add">➕ Add Member</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alerts-section">
+                <div id="alertsPanel">
+                    <h3>⚠️ Recent Alerts</h3>
+                    <div id="alertsList"></div>
+                </div>
+
+                <div class="actions">
+                    <button id="whatsappBtn" class="btn-whatsapp">📱 WhatsApp</button>
+                    <button id="emailBtn" class="btn-email">📧 Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
